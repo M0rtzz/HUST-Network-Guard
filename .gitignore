@@ -1,0 +1,5 @@
+**/HUST-Network-Guard.exe
+**/HUST-Network-Guard.log
+**/.env
+/outs/*
+!/outs/.gitkeep
