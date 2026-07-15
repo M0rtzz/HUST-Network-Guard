@@ -81,7 +81,7 @@ g++ -std=c++17 -O2 -Wall -Wextra -pthread ^
     HUST-Network-Guard.cc "%RESOURCE_OBJECT%" ^
     -o "%OUT_DIR%\HUST-Network-Guard.exe" -mwindows ^
     -I"%CURL_ROOT%\include" -L"%CURL_ROOT%\lib" ^
-    -static-libgcc -static-libstdc++ -lcurl -lshell32
+    -static-libgcc -static-libstdc++ -lcurl -lshell32 -lbcrypt
 
 if errorlevel 1 (
     del /Q "%RESOURCE_OBJECT%" >nul 2>nul

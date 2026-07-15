@@ -1,0 +1,73 @@
+name: Release Windows x64
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build and release portable ZIP
+    runs-on: windows-2025
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install MSYS2 UCRT64 toolchain
+        uses: msys2/setup-msys2@v2
+        with:
+          location: C:\msys64
+          msystem: UCRT64
+          update: true
+          install: mingw-w64-ucrt-x86_64-gcc
+
+      - name: Build application
+        shell: cmd
+        run: build.bat
+
+      - name: Create portable package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $release_version = "${{ github.ref_name }}"
+          $package_name = "HUST-Network-Guard-$release_version-windows-x64"
+          $package_directory = Join-Path "dist" $package_name
+          $license_directory = Join-Path $package_directory "third-party-licenses"
+
+          New-Item -ItemType Directory -Force -Path $license_directory | Out-Null
+          Copy-Item "outs/HUST-Network-Guard.exe" $package_directory
+          Copy-Item "outs/libcurl-x64.dll" $package_directory
+          Copy-Item ".env.example" $package_directory
+          Copy-Item "README.md" $package_directory
+          Copy-Item "3rdparty/curl/COPYING.txt" (Join-Path $license_directory "curl-COPYING.txt")
+
+          $zip_path = Join-Path "dist" "$package_name.zip"
+          Compress-Archive -Path $package_directory -DestinationPath $zip_path -CompressionLevel Optimal
+
+          $zip_name = Split-Path $zip_path -Leaf
+          $zip_sha256 = (Get-FileHash -Algorithm SHA256 $zip_path).Hash.ToLowerInvariant()
+          "$zip_sha256  $zip_name" | Set-Content -Encoding ascii "$zip_path.sha256"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HUST-Network-Guard-${{ github.ref_name }}-windows-x64
+          path: |
+            dist/*.zip
+            dist/*.sha256
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: HUST-Network-Guard ${{ github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            dist/*.zip
+            dist/*.sha256
