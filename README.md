@@ -29,11 +29,11 @@ HUST_CHECK_INTERVAL_SECONDS=5
 HUST_FAILURE_THRESHOLD=5
 ```
 
-程序在断网时访问 `https://www.baidu.com` 获取校园网返回的认证页面，动态提取认证服务器、MAC 和 `queryString`，再使用明文密码生成登录所需的 256 位加密密码。因此不需要抓包，也不需要配置固定的认证地址或设备校验码。
+程序通过 `https://www.baidu.com` 检测是否能够正常访问互联网。确认断网后，再访问 `http://www.baidu.com` 获取校园网拦截请求后返回的认证页面，并动态提取认证服务器、MAC 和 `queryString`。程序随后使用明文密码生成登录所需的 256 位加密密码，因此不需要抓包，也不需要配置固定的认证地址或设备校验码。
 
 `HUST_CHECK_INTERVAL_SECONDS` 是联网正常时的检测周期。`HUST_FAILURE_THRESHOLD` 是确认断网前所需的连续失败次数，必须至少为 1。第一次失败后会每 5 秒复检，不再等待正常检测周期。
 
-`.env` 包含明文密码，不要截图或分享。程序从 `HUST-Network-Guard.exe` 所在目录读取该文件，修改后需要重启程序。
+`.env` 包含明文密码，不要截图或分享。程序从 `HUST-Network-Guard.exe` 所在目录读取该文件。如果启动时配置无效，程序会每 5 秒重新读取；补全或修正 `.env` 后无需重启程序。
 
 ---
 

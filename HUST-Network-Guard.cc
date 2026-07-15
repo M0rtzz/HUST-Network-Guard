@@ -42,6 +42,7 @@ namespace
 
     constexpr std::chrono::seconds DEFAULT_CHECK_INTERVAL{30};
     constexpr std::chrono::seconds FAILURE_RECHECK_INTERVAL{5};
+    constexpr std::chrono::seconds CONFIG_RELOAD_INTERVAL{5};
     constexpr std::chrono::seconds LOGIN_VERIFY_DELAY{5};
     constexpr int DEFAULT_FAILURE_THRESHOLD = 3;
     constexpr std::array<std::chrono::seconds, 3> RETRY_DELAYS{
@@ -1131,10 +1132,22 @@ namespace
     {
         AppConfig config;
         std::string configuration_error;
-        if (!loadConfiguration(config, configuration_error))
+        std::string last_configuration_error;
+        while (monitor_running.load() && !loadConfiguration(config, configuration_error))
         {
-            logMessage("Configuration error: " + configuration_error + ".");
-            notifyConfigurationError();
+            if (configuration_error != last_configuration_error)
+            {
+                logMessage("Configuration error: " + configuration_error + ".");
+                notifyConfigurationError();
+                last_configuration_error = configuration_error;
+            }
+            if (!waitOrStop(CONFIG_RELOAD_INTERVAL))
+            {
+                return;
+            }
+        }
+        if (!monitor_running.load())
+        {
             return;
         }
 
@@ -1351,7 +1364,7 @@ namespace
         notification.dwInfoFlags = NIIF_ERROR;
         notification.uTimeout = 5000;
         lstrcpynW(notification.szInfoTitle, L"HUST-Network-Guard", static_cast<int>(sizeof(notification.szInfoTitle) / sizeof(notification.szInfoTitle[0])));
-        lstrcpynW(notification.szInfo, L"无法读取 .env 配置，请检查文件内容后重启程序。", static_cast<int>(sizeof(notification.szInfo) / sizeof(notification.szInfo[0])));
+        lstrcpynW(notification.szInfo, L".env 配置有误，请修正文件；程序每 5 秒自动重试。", static_cast<int>(sizeof(notification.szInfo) / sizeof(notification.szInfo[0])));
         Shell_NotifyIconW(NIM_MODIFY, &notification);
     }
 
