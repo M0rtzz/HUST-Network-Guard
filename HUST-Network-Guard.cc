@@ -134,6 +134,7 @@ namespace
     void notifyDisconnected();
     void notifyConfigurationError();
     void notifyLoginTestResult(LoginAttemptStatus status);
+    void notifyImmediateCheckResult(bool online);
 
     size_t writeCallback(void *contents, size_t size, size_t nmemb, void *userp)
     {
@@ -388,6 +389,7 @@ namespace
             {
                 logMessage("Immediate connectivity check result: offline (" + failure_reason + ").");
             }
+            notifyImmediateCheckResult(online);
         }
 
         return online;
@@ -1248,6 +1250,7 @@ namespace
     constexpr UINT TRAY_DISCONNECTED_NOTIFICATION_MESSAGE = WM_APP + 3;
     constexpr UINT TRAY_CONFIGURATION_ERROR_MESSAGE = WM_APP + 4;
     constexpr UINT TRAY_LOGIN_TEST_RESULT_MESSAGE = WM_APP + 5;
+    constexpr UINT TRAY_IMMEDIATE_CHECK_RESULT_MESSAGE = WM_APP + 6;
     constexpr UINT MENU_CHECK_NOW = 1001;
     constexpr UINT MENU_TEST_LOGIN = 1002;
     constexpr UINT MENU_OPEN_LOG = 1003;
@@ -1311,6 +1314,14 @@ namespace
         }
     }
 
+    void notifyImmediateCheckResult(bool online)
+    {
+        if (tray_icon.hWnd != nullptr)
+        {
+            PostMessageW(tray_icon.hWnd, TRAY_IMMEDIATE_CHECK_RESULT_MESSAGE, online ? 1 : 0, 0);
+        }
+    }
+
     void showConnectedNotification()
     {
         NOTIFYICONDATAW notification = tray_icon;
@@ -1371,6 +1382,19 @@ namespace
             notification.dwInfoFlags = NIIF_ERROR;
             lstrcpynW(notification.szInfo, L"登录配置测试未完成，请查看日志中的网络或服务器错误。", static_cast<int>(sizeof(notification.szInfo) / sizeof(notification.szInfo[0])));
         }
+        Shell_NotifyIconW(NIM_MODIFY, &notification);
+    }
+
+    void showImmediateCheckNotification(bool online)
+    {
+        NOTIFYICONDATAW notification = tray_icon;
+        notification.uFlags = NIF_INFO;
+        notification.dwInfoFlags = online ? NIIF_INFO : NIIF_WARNING;
+        notification.uTimeout = 5000;
+        lstrcpynW(notification.szInfoTitle, L"HUST-Network-Guard", static_cast<int>(sizeof(notification.szInfoTitle) / sizeof(notification.szInfoTitle[0])));
+        lstrcpynW(notification.szInfo,
+                  online ? L"立即检测完成：网络正常。" : L"立即检测完成：无法访问互联网。",
+                  static_cast<int>(sizeof(notification.szInfo) / sizeof(notification.szInfo[0])));
         Shell_NotifyIconW(NIM_MODIFY, &notification);
     }
 
@@ -1452,6 +1476,9 @@ namespace
         case TRAY_LOGIN_TEST_RESULT_MESSAGE:
             showLoginTestNotification(static_cast<LoginAttemptStatus>(wparam));
             return 0;
+        case TRAY_IMMEDIATE_CHECK_RESULT_MESSAGE:
+            showImmediateCheckNotification(wparam != 0);
+            return 0;
         case TRAY_CALLBACK_MESSAGE:
             if (lparam == WM_RBUTTONUP || lparam == WM_CONTEXTMENU)
             {
@@ -1500,6 +1527,7 @@ namespace
     void notifyDisconnected() {}
     void notifyConfigurationError() {}
     void notifyLoginTestResult(LoginAttemptStatus) {}
+    void notifyImmediateCheckResult(bool) {}
 
 #endif
 

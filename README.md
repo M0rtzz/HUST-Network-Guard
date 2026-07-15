@@ -46,7 +46,7 @@ HUST_FAILURE_THRESHOLD=5
   3. 在解压目录中右键 `HUST-Network-Guard.exe`，选择“创建快捷方式”。
   4. 将创建的 `"HUST-Network-Guard.exe.lnk"` 复制到刚打开的 `Startup` 目录。
 
-不要移动或删除原始解压目录；快捷方式需要从该目录启动程序，以便读取同目录的 `.env` 和 `libcurl-x64.dll`。
+不要移动或删除原始解压目录；快捷方式需要从该目录启动程序，以便读取同目录的 `.env`、`libcurl-x64.dll` 和 `libwinpthread-1.dll`。
 
 右键托盘图标可使用以下命令：
 

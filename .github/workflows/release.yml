@@ -41,9 +41,11 @@ jobs:
           New-Item -ItemType Directory -Force -Path $license_directory | Out-Null
           Copy-Item "outs/HUST-Network-Guard.exe" $package_directory
           Copy-Item "outs/libcurl-x64.dll" $package_directory
+          Copy-Item "outs/libwinpthread-1.dll" $package_directory
           Copy-Item ".env.example" $package_directory
           Copy-Item "README.md" $package_directory
           Copy-Item "3rdparty/curl/COPYING.txt" (Join-Path $license_directory "curl-COPYING.txt")
+          Copy-Item "3rdparty/winpthreads/COPYING.txt" (Join-Path $license_directory "winpthreads-COPYING.txt")
 
           $zip_path = Join-Path "dist" "$package_name.zip"
           Compress-Archive -Path $package_directory -DestinationPath $zip_path -CompressionLevel Optimal

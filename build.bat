@@ -31,6 +31,7 @@ if not "%GXX_POINTER_SIZE%"=="8" (
 )
 
 for /f "delims=" %%G in ('where g++') do if not defined GXX_PATH set "GXX_PATH=%%G"
+for %%G in ("%GXX_PATH%") do set "GXX_BIN=%%~dpG"
 echo Compiler: %GXX_PATH%
 echo Compiler target: %GXX_TARGET% ^(64-bit^)
 
@@ -94,6 +95,13 @@ copy /Y "%CURL_ROOT%\bin\libcurl-x64.dll" "%OUT_DIR%\libcurl-x64.dll" >nul
 if errorlevel 1 (
     echo ERROR: Could not copy libcurl-x64.dll next to HUST-Network-Guard.exe.
     exit /b 1
+)
+if exist "%GXX_BIN%libwinpthread-1.dll" (
+    copy /Y "%GXX_BIN%libwinpthread-1.dll" "%OUT_DIR%\libwinpthread-1.dll" >nul
+    if errorlevel 1 (
+        echo ERROR: Could not copy libwinpthread-1.dll next to HUST-Network-Guard.exe.
+        exit /b 1
+    )
 )
 if exist "%CD%\.env" (
     copy /Y "%CD%\.env" "%OUT_DIR%\.env" >nul
